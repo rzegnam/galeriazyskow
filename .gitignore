@@ -1,0 +1,7 @@
+*.jl
+*.json
+galeria/.scrapy
+.idea
+galeria/spiders/basic.py
+galeria/spiders/posts.py
+*.pyc

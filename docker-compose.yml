@@ -1,0 +1,21 @@
+version: '2'
+services:
+  db:
+    restart: always
+    image: postgres 
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSOWRD=postgres
+      - POSTGRES_DB=test
+    ports:
+      - "5432"
+  api:
+    build: docker/api
+    command: python /code/rest/manage.py runserver 0.0.0.0:8080
+    volumes:
+      - .:/code
+    ports:
+      - "8080:8080"
+    links:
+      - db
+    entrypoint: /entrypoint.sh

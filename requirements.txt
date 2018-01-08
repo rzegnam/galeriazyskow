@@ -1,0 +1,7 @@
+Scrapy
+SQLAlchemy
+django
+djangorestframework
+psycopg2
+bsddb3
+scrapy-deltafetch
