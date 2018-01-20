@@ -2,16 +2,17 @@
 - [ ] dokumentacja
 - [ ] plik konfiguracyjny - login, hasło
 - [ ] testy
+- [ ] na Raspberry
+- [ ] wdrożenie systemu (Scrapy Cloud / Aruba)
 - [ ] kosmetyka
 
-
 ### pozostałe
-*rewizja kodu
-*komentowanie, czytanie kodu
-*dokumentacja
-*diagram baz danych
-*protokół wymiany danych (jak wygląda ramka pomiędzy przekazywanymi danymi)
-*scenariusze zapisane na diagram sekwencji (najpierw dokumentacja, potem program)
+* rewizja kodu
+* komentowanie, czytanie kodu
+* dokumentacja
+* diagram baz danych
+* protokół wymiany danych (jak wygląda ramka pomiędzy przekazywanymi danymi)
+* scenariusze zapisane na diagram sekwencji (najpierw dokumentacja, potem program)
 
 ### komentarze
 * nie podawać loginów i haseł
@@ -25,3 +26,8 @@
 * termin - final + prezentacja
 
 ### prezentacja
+* po co to jest?
+* wyniki: statystyki odwiedzin z dwóch tygodni
+* TODO: bezpieczeństwo - np. zabezpieczenie protokołu, wprowadzenie autoryzacji robaka - certyfikaty, generyczność, wpięcie do systemu
+* na tydzień przed - przesłać prezentację
+* jeśli ze sprzętem - dać znać
