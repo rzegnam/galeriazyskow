@@ -31,3 +31,18 @@
 * TODO: bezpieczeństwo - np. zabezpieczenie protokołu, wprowadzenie autoryzacji robaka - certyfikaty, generyczność, wpięcie do systemu
 * na tydzień przed - przesłać prezentację
 * jeśli ze sprzętem - dać znać
+
+"Proszę  przygotować  prezentacje aplikacji, termin nadsyłania to 7 dni
+przed zaliczeniem. Prezentacje należy przesłać w postacji pliku PDF.
+
+W prezentacji proszę o zamieszczenie:
+- Zastosowania
+- Opisu funkcjonalności
+- Diagramu  przypadków  użycia  - dopuszczam  prezentacje scenariuszy
+użycia aplikacji
+- Użytych technologii/ modułów elektronicznych
+- Użytych protokołów danych
+- Wykorzystanych bibliotek
+- Występujących komponentów
+- Prezentacja przepływu danych w aplikacji
+- Możliwości rozwojowe aplikacji"
