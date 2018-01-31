@@ -55,11 +55,11 @@ ROBOTSTXT_OBEY = True
 
 # Enable or disable spider middlewares
 # See http://scrapy.readthedocs.org/en/latest/topics/spider-middleware.html
-SPIDER_MIDDLEWARES = {
-    'galeria.middlewares.GaleriaSpiderMiddleware': 543,
-    'scrapy_deltafetch.DeltaFetch': 100,
-}
-DELTAFETCH_ENABLED = True
+# SPIDER_MIDDLEWARES = {
+#     'galeria.middlewares.GaleriaSpiderMiddleware': 543,
+#     'scrapy_deltafetch.DeltaFetch': 100,
+# }
+# DELTAFETCH_ENABLED = True
 # Enable or disable downloader middlewares
 # See http://scrapy.readthedocs.org/en/latest/topics/downloader-middleware.html
 #DOWNLOADER_MIDDLEWARES = {
@@ -74,9 +74,9 @@ DELTAFETCH_ENABLED = True
 
 # Configure item pipelines
 # See http://scrapy.readthedocs.org/en/latest/topics/item-pipeline.html
-ITEM_PIPELINES = {
-   'galeria.pipelines.GaleriaPipeline': 300,
-}
+# ITEM_PIPELINES = {
+#    'galeria.pipelines.GaleriaPipeline': 300,
+# }
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See http://doc.scrapy.org/en/latest/topics/autothrottle.html

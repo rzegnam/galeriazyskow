@@ -32,10 +32,10 @@ class BasicSpider(scrapy.Spider):
         """
         This function parses a post page.
         
-        @url http://galeriazyskow.pl/analiza-usdpln-1d/
+        @url http://galeriazyskow.pl/dolar-zlapal-zadyszke-30-01-2018r/
+        @url http://galeriazyskow.pl/pln-pod-lekka-presja-dane-dot-pkb-w-kalendarzu-30-01-2018r/
         @returns items 1
         @scrapes text
-        @scrapes url date
         """
         l = ItemLoader(item=GaleriaItem(), response=response)
 
@@ -44,3 +44,4 @@ class BasicSpider(scrapy.Spider):
 #        l.add_value('url', response.url)
 #        l.add_value('date', datetime.datetime.now())
         yield l.load_item()
+

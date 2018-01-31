@@ -1,0 +1,33 @@
+table.quotes{
+	width:100%;
+	margin:0;
+	font-size: 11px;
+	border-collapse: collapse;
+}
+table.quotes td{
+	padding: 3px 2px;
+	border-bottom: 1px solid #E3E3E3;
+}
+table.quotes tr.type-graph td{
+	border:none;
+}
+table.quotes .sname{
+	font-weight:bold;
+}
+table.quotes .sclose{
+	font-weight:bold;
+}
+table.quotes .schangepr{
+	font-weight:bold;
+}
+table.quotes .sdate{
+	font-size:9px;
+	color:#999;
+	text-align:right;
+}
+table.quotes td div.graph-c{
+	font-size:10px;
+}
+table.quotes tr.symbol-graph td{
+	padding:0 0 3px 0;
+}

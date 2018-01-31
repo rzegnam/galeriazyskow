@@ -31,3 +31,5 @@
 * TODO: bezpieczeństwo - np. zabezpieczenie protokołu, wprowadzenie autoryzacji robaka - certyfikaty, generyczność, wpięcie do systemu
 * na tydzień przed - przesłać prezentację
 * jeśli ze sprzętem - dać znać
+
+#TODO skasować niepotrzebne pająki

@@ -1,0 +1,899 @@
+Main = {
+	
+	_contentWidth: 0,
+	
+	init: function(_widget){
+		Main._contentWidth = $('#content').width();
+		Main.pushEngineAddQuotesChannels(Main.getSOIDs());
+		PushEngine.onMsg = function(raw){Main.apeOnMsg(raw, _widget.APEDataCallBack);};
+		PushEngine.init();
+		
+		$('a').click(function(){
+			window.parent.location.href = $(this).attr('href');
+			return false;
+		});
+	},
+	
+	attachGraph: function(_symbol_oid, _range){
+		_range = (_range) ? _range : '1d';
+		Model.getSymbolQuotes(_symbol_oid, _range,  function(){
+			Main.refreshSymbolGraph(_symbol_oid);
+		})
+	},
+	
+	apeOnMsg: function(raw, _data_callback){
+		if (raw.raw == 'msg' && raw.data.length>0) {
+			for (var i=0; i<raw.data.length; i++) {
+				var msgRow = raw.data[i];
+				switch (msgRow.type) {
+					case 'QUOTE': 
+						for(var i = 0; i < msgRow.data.length; i++){
+							Model.addSymbolQuote(msgRow.data[i])
+							_data_callback(msgRow.data[i]);
+						}
+					break;
+				}
+			}
+		}
+	},
+	
+	refreshSymbolGraph: function(_symbol_oid){
+		var sdata = Model.getSymbolQuote(_symbol_oid);
+		
+		var seriesData = Helper.quoteToProfileChartSeries(sdata.quotes, 'sparkline', {aggregate_limit: 200, fill_spaces: true});
+		var config = {fixed: 2}
+		
+		var container = $("#chartph-"+sdata.symbol.oid);
+		container.empty();
+		
+		if (seriesData.series.quotes.length>=2) {
+			var _chartWidth = container.width() - 45;
+			var _chartHeight = container.height() - 30;
+
+			var qvalueMin = seriesData.minQuote;
+			var qvalueMax = seriesData.maxQuote;
+			var prevCloseValue = (sdata.symbol.pc) ? sdata.symbol.pc : 0;
+			var lastValue = seriesData.series.quotes[seriesData.series.quotes.length-1];
+			
+			// gdy wykres obejmuje więcej niż jeden dzień nie pokazujemy linii odniesienia
+			if(sdata.quotes[sdata.quotes.length - 1].ts - sdata.quotes[0].ts > 86400){
+				prevCloseValue = 0;
+			}
+			
+			var showVolumes = (seriesData.maxVolume < 1) ? false : true;
+			var showPrevClose = (sdata.symbol.pc) ? true : false;
+			var showFill = false;
+			
+			if (showPrevClose) {
+				qvalueMin = (sdata.symbol.pc < qvalueMin) ? sdata.symbol.pc : qvalueMin;
+				qvalueMax = (sdata.symbol.pc > qvalueMax) ? sdata.symbol.pc : qvalueMax;
+			}
+			
+			qvalueMin -= 0.1 * (qvalueMax - qvalueMin);
+			qvalueMax += 0.1 * (qvalueMax - qvalueMin);
+			
+			if (seriesData.series.volumes.length) {
+				var barWidth = 1;
+				if (seriesData.series.volumes.length < 40) {
+					barWidth = 3;
+				}
+				if (seriesData.series.volumes.length < 60 && seriesData.series.volumes.length >= 40) {
+					barWidth = 2;
+				}
+			}
+			
+			var chartDiv = $('<div />');
+			chartDiv.css({
+					position: 'relative',
+					height: _chartHeight,
+					width: _chartWidth + 1,
+					top: '5px',
+					border: '1px solid ' + Main.getGraphColor('border','#E3E3E3')
+			}).
+			appendTo(container);
+			
+			$('<span class="sparktick" />').
+				css({
+					position: 'absolute',
+					top: 0,
+					right: 0
+				}).
+				text((qvalueMax > 9999) ? qvalueMax.toFixed(1) : qvalueMax.toFixed(config.fixed)).
+				appendTo(container);
+			
+			$('<span class="sparktick" />').
+				css({
+					position: 'absolute',
+					top: _chartHeight,
+					right: 0
+				}).
+				text((qvalueMin > 9999) ? qvalueMin.toFixed(1) : qvalueMin.toFixed(config.fixed)).
+				appendTo(container);
+			
+			
+			if (prevCloseValue || sdata.symbol.pc_force) {
+				var prevClosePosition = Math.round( ((qvalueMax-prevCloseValue)*_chartHeight)/(qvalueMax - qvalueMin) );
+				$('<span class="sparktick" />').
+					css({
+						position: 'absolute',
+						top: prevClosePosition-5,
+						left: 2,
+						color: Main.getGraphColor('prevclose','#ff0000')
+					}).
+					text((prevCloseValue > 9999) ? prevCloseValue.toFixed(1) : prevCloseValue.toFixed(config.fixed)).
+					appendTo(container);
+			}
+
+			var lastClosePosition = Math.round( ((qvalueMax-lastValue)*_chartHeight)/(qvalueMax - qvalueMin) );
+			$('<span class="sparktick" />').
+				css({
+					position: 'absolute',
+					top: lastClosePosition+2,
+					right: 0,
+					color: Main.getGraphColor('quote','#3B5998')
+				}).
+				text((lastValue > 9999) ? lastValue.toFixed(1) : lastValue.toFixed(config.fixed)).
+				appendTo(container);
+
+			$('<span class="sparktick time-scale-begin" />').
+			css({
+				position: 'absolute',
+				top: _chartHeight+10,
+				left: 0
+			}).
+			text(seriesData.ticks[0][1]).
+			appendTo(container);
+			
+			$('<span class="sparktick time-scale-end" />').
+			css({
+				position: 'absolute',
+				top: _chartHeight+10,
+				right: 40
+			}).
+			text(seriesData.ticks[seriesData.ticks.length-1][1]).
+			appendTo(container);
+
+			if (showVolumes) {
+				chartDiv.sparkline(seriesData.series.volumes,{
+					height: _chartHeight,
+					width:_chartWidth,
+					type: 'bar',
+					barWidth: barWidth,
+					barSpacing: 0,
+					chartRangeMin: 0,
+					chartRangeMax: Math.round(seriesData.maxVolume*1.3),
+					chartRangeClip: true,
+					barColor: Main.getGraphColor('volume','#A2CFFF')
+				});
+			}
+			
+			chartDiv.sparkline(seriesData.series.quotes,{
+				height: _chartHeight,
+				width:_chartWidth,
+				lineColor: Main.getGraphColor('quote','#3B5998'),
+				fillColor: showFill,
+				composite: (showVolumes) ? true : false,
+				chartRangeMin: qvalueMin,
+				chartRangeMax: qvalueMax,
+				chartRangeClip: true,
+				spotRadius: false
+			});
+
+			if (prevCloseValue > 0 || sdata.symbol.pc_force) {
+				chartDiv.sparkline([[0,prevCloseValue],[1,prevCloseValue]],{
+					height: _chartHeight,
+					width:_chartWidth,
+					lineColor: Main.getGraphColor('prevclose','#ff0000'),
+					fillColor: false,
+					composite: true,
+					chartRangeMin: qvalueMin,
+					chartRangeMax: qvalueMax,
+					chartRangeClip: true,
+					spotRadius: false
+				});
+			}
+
+		}
+		
+	},
+	
+	getSOIDs: function(){
+		var oids = [];
+		$('.soid').each(function(){
+			reg = new RegExp(/soid\-([0-9]+)/g);
+			reg_dest = reg.exec($(this).attr('class'));
+			if (reg_dest != null){
+				oids.push(parseInt(reg_dest[1], 10));
+			}
+		});
+		return oids;
+	},
+	
+	pushEngineAddQuotesChannels: function(_oids){
+		for(var i=0; i < _oids.length; i++) {
+			PushEngine.channel.push('*q_' + _oids[i]);
+		}
+	},
+	
+	getGraphColor: function(name, default_color){
+		var base_color = $('body').getHexColor();
+		var element_color = $('.chart-color-' + name).getHexColor();
+		if(element_color != base_color){
+			return element_color;
+		}
+		return default_color;
+	}
+	
+	
+}
+
+
+var Model = {
+	_symbols_quotes: [],
+	
+	getSymbolQuotes: function(_symbol_oid, _range, _callback) {
+		$.post('/get-quotes-json/', {oids: [_symbol_oid], ranges: [_range]}, function(data) {
+			$.each(data.data, function (i,item){
+				Model._symbols_quotes.push(item);
+			});
+			
+			_callback();
+			
+		}, 'json');
+	},
+	
+	getSymbolQuote: function(sid) {
+		for(var i=0; i < Model._symbols_quotes.length; i++) {
+			if (Model._symbols_quotes[i]!=null && Model._symbols_quotes[i].symbol.oid == sid) {
+				return Model._symbols_quotes[i];
+			}
+		}
+		return false;
+	},
+	
+	addSymbolQuote: function(_data) {
+		var _symbol = Model.findSymbolQuoteById(_data.symbol.oid);
+		if (_symbol) {
+			if(_data.symbol.ts - _symbol.symbol.ts > 3600 * 12){
+				_symbol.quotes = [];
+			}
+			_symbol.symbol = _data.symbol;
+			
+			for(var i = 0; i < _data.quotes.length; i++){
+				var _q = _data.quotes[i];
+				_q.min = _q.c;
+				_q.max = _q.c;
+				_q.o = _q.c;
+				if(!_q.v && _q.mc){
+					_q.v = _q.mc;
+				}
+				if(_symbol.quotes == null){
+					_symbol.quotes = [];
+				}
+				_symbol.quotes.push(_q);
+			}
+			return true;
+		}
+		else {
+			return false;
+		}
+	},
+	
+	findSymbolQuoteById: function(sid) {
+		for(var i=0; i < Model._symbols_quotes.length; i++) {
+			if (Model._symbols_quotes[i]!=null && Model._symbols_quotes[i].symbol.oid == sid) {
+				return Model._symbols_quotes[i];
+			}
+		}
+		
+		return false;
+	}
+	
+}
+
+
+var Helper = {
+	
+	mathChangeValue: function(k, ko, fixed) {
+		if(!fixed)
+			fixed = 2;
+		var ch = 0;
+		ch = (k-ko)
+		return ch.toFixed(fixed);
+	},
+	
+	mathChangeValueSpan: function(k, ko, fixed){
+		if(!fixed)
+			fixed = 2;
+		var _ch = Helper.mathChangeValue(k, ko, fixed);
+		if (_ch > 0) {
+			var chthtml = '<span class="cplus">+'+_ch+'</span>';
+		}
+		else if (_ch < 0) {
+			var chthtml = '<span class="cminus">'+_ch+'</span>';
+		}
+		else {
+			var chthtml = '<span class="czero">'+_ch+'</span>';
+		}
+		return chthtml;
+	},
+	
+	mathChange: function(k, ko) {
+		var ch = 0;
+		if (ko) {
+			ch = Math.round( ((k/ko)-1)*10000)/100;
+		}
+		return ch.toFixed(2);
+	},
+	
+	mathChangeSpan: function(k, ko){
+		var _ch = Helper.mathChange(k, ko);
+		if (_ch > 0) {
+			var chthtml = '<span class="cplus">(+'+_ch+'%)</span>';
+		}
+		else if (_ch < 0) {
+			var chthtml = '<span class="cminus">('+_ch+'%)</span>';
+		}
+		else {
+			var chthtml = '<span class="czero">('+_ch+'%)</span>';
+		}
+		return chthtml;
+	},
+	
+	mathChangeSpan2: function(k, ko){
+		var _ch = Helper.mathChange(k, ko);
+		if (_ch > 0) {
+			var chthtml = '<span class="cplus">+'+_ch+'%</span>';
+		}
+		else if (_ch < 0) {
+			var chthtml = '<span class="cminus">'+_ch+'%</span>';
+		}
+		else {
+			var chthtml = '<span class="czero">'+_ch+'%</span>';
+		}
+		return chthtml;
+	},
+
+	mathValueSpan: function(_ch, pref, post){
+		pref = pref ? pref : '';
+		post = post ? post : '';
+		if (_ch > 0) {
+			var chthtml = '<span class="cplus">'+pref+'+'+_ch+post+'</span>';
+		}
+		else if (_ch < 0) {
+			var chthtml = '<span class="cminus">'+pref+_ch+post+'</span>';
+		}
+		else {
+			var chthtml = '<span class="czero">'+pref+_ch+post+'</span>';
+		}
+		return chthtml;
+	},
+
+	// do usuniecia?
+	quoteToChartSeries: function(quotes) {
+		var data = {
+			minTime: -1,
+			maxTime: -1,
+			series: {
+				quotes: [],
+				volumes: []
+			}	
+		};
+		
+		var offset = (new Date()).getTimezoneOffset()*60;
+		
+		for (var i=0; i<quotes.length; i++) {
+			var _t = (quotes[i].ts-offset)*1000;
+			
+			if (!i) {
+				data.minTime = _t;
+				data.maxTime = _t;
+			}
+			
+			data.series.quotes.push([_t,quotes[i].k]);
+			data.series.volumes.push([_t,quotes[i].o]);
+			
+			if (_t < data.minTime) {
+				data.minTime = _t;
+			}
+			
+			if (_t > data.maxTime) {
+				data.maxTime = _t;
+			}
+			
+			
+		}
+		return data;
+	},
+	
+	quotesAggregateLoop:1,
+	
+	quoteToProfileChartSeries: function(quotes, type, options){
+		
+		Helper.quotesAggregateLoop = 1;
+		
+		var opt = {
+			aggregate_limit: null,
+			fill_spaces: false
+		};
+		$.extend(opt, options);
+		
+		var _days = [];
+
+		var data = {
+			//minTime: -1,
+			//maxTime: -1,
+			series: {
+				quotes: [],
+				volumes: []
+			},
+			maxVolume: 0,
+			maxPoint: 0,
+			ticks: _days,
+			maxQuote: 0,
+			minQuote: 0
+		};
+
+		var ts_div = quotes[quotes.length-1].ts - quotes[0].ts;
+		if (ts_div > 3600 * 24 * 365){
+			ticks_date_format = 'yyyy';
+			ticks_date_compare_mask = 'yyyy';
+			ticks_skip_first = true;
+			ticks_skip_last = true;
+		}
+		else if (ts_div > 3600 * 24 * 30){
+			ticks_date_format = 'm/yyyy';
+			ticks_date_compare_mask = 'm/yyyy';
+			ticks_skip_first = true;
+			ticks_skip_last = true;
+		} 
+		else if (ts_div > 3600 * 24 * 10){
+			ticks_date_format = 'd/mm';
+			ticks_date_compare_mask = 'd/mm';
+			ticks_skip_first = true;
+			ticks_skip_last = true;
+			
+		} 
+		else if (ts_div > 3600 * 24){
+			ticks_date_format = 'd/mm';
+			ticks_date_compare_mask = 'd/mm';
+			ticks_skip_first = true;
+			ticks_skip_last = true;
+		} 
+		else {
+			ticks_date_format = 'HH:MM';
+			ticks_date_compare_mask = 'HH';
+			ticks_skip_first = false;
+			ticks_skip_last = false;
+		}
+		
+		
+		if(type == 'sparkline'){
+			ticks_skip_first = false;
+			ticks_skip_last = false;
+		}
+		
+		if (opt.aggregate_limit || opt.fill_spaces){
+			var interval = 7 * 24 * 3600;
+			if (ts_div < 5 * 60){
+				interval = 15;
+			} else if(ts_div < 24 * 3600){
+				interval = 60;
+			} else if(ts_div < 6 * 24 * 3600){
+				interval = 5 * 60;
+			} else if(ts_div < 30 * 24 * 3600){
+				interval = 20 * 60;
+			} else if(ts_div < 60 * 24 * 3600){
+				interval = 30 * 60;
+			} else if(ts_div < 150 * 24 * 3600){
+				interval = 2 * 3600;
+			} else if(ts_div < 3 * 365 * 24 * 3600){
+				interval = 24 * 3600;
+			} 
+			quotes = Helper.aggregateQuotes(quotes, opt.aggregate_limit, interval, opt.fill_spaces);
+		}
+		
+		if (quotes.length == 1){
+			var fake_point = jQuery.extend({}, quotes[0]);
+			fake_point.v = 0;
+			fake_point.mc = 0;
+			quotes.push(fake_point);
+		}
+		
+		for (var i=0; i<quotes.length; i++) {
+			
+			if (i == 0 && ticks_skip_first){
+				_days.push([i,' ']);
+			}
+			else if(Helper.isNewChartTick(ticks_date_compare_mask, ((typeof quotes[i-1] != 'undefined') ? quotes[i-1].ts : 0), quotes[i].ts)){
+				_days.push([i,quotes[i].ts]);
+			} 
+			
+			if(i == quotes.length - 1){
+				if(ticks_skip_last){
+					_days.push([i,' ']);
+				} else {
+					if ((quotes[i].ts - _days[_days.length - 1][1]) / ts_div < 0.1){
+						_days[_days.length - 1] = [i, quotes[i].ts];
+					} else {
+						_days.push([i,quotes[i].ts]);
+					}
+				}
+			}
+			
+			if (type == 'ohlc') {
+				data.series.quotes.push([i,parseFloat(quotes[i].o),parseFloat(quotes[i].max),parseFloat(quotes[i].min),parseFloat(quotes[i].c)]);
+			}
+			else if (type == 'sparkline') {
+				data.series.quotes.push(parseFloat(quotes[i].c));
+			}
+			else {
+				data.series.quotes.push([i,parseFloat(quotes[i].c)]);
+			}
+			
+			if (quotes[i].mc && !quotes[i].v){ // latka na volumen indexow
+				quotes[i].v = quotes[i].mc;
+			}
+			
+			if (!parseFloat(quotes[i].v)){
+				quotes[i].v = 0.0000000001;
+			}
+			data.series.volumes.push(parseFloat(quotes[i].v));
+			
+			if (parseFloat(quotes[i].v) > data.maxVolume) {
+				data.maxVolume = quotes[i].v;
+			}
+			
+			if (parseFloat(quotes[i].max) > data.maxQuote) {
+				data.maxQuote = quotes[i].max;
+			}
+			if (parseFloat(quotes[i].min) < data.minQuote || !data.minQuote) {
+				data.minQuote = quotes[i].min;
+			}
+			
+			data.maxPoint = i;
+		}
+		
+		for (var j=0; j<data.ticks.length; j++) {
+			if (parseInt(data.ticks[j][1])){
+				var _tsDate = new Date((data.ticks[j][1]*1000));
+				data.ticks[j][1] = _tsDate.format(ticks_date_format);
+			} 
+		}
+		data.aggregateLoops = Helper.quotesAggregateLoop;
+		return data;
+		
+	},
+	
+	isNewChartTick: function(_mask, _prev_ts, _current_ts){
+		if(!_prev_ts || new Date(_prev_ts*1000).format(_mask) != new Date(_current_ts*1000).format(_mask)){
+			return true;
+		} else {
+			return false;
+		}
+	},
+	
+	aggregateQuotes: function(_quotes, _limit, _interval, _fill_spaces){
+		var limit = (_limit) ? _limit : 1000;
+		var interval = (_interval) ? _interval : 60;
+		var fill_spaces = (_fill_spaces) ? _fill_spaces : false;
+		
+		var quotes = [];
+		
+		if(_quotes.length){
+			var ts_start = _quotes[0].ts;
+			var ts_div = ts_start - Math.floor(ts_start / interval) * interval;
+			var ts_end = _quotes[_quotes.length - 1].ts;
+		}
+		
+		var _out = {};
+		for(var i = 0; i < _quotes.length; i++){
+			var _key = (Math.floor(_quotes[i].ts / interval) * interval) + ts_div;
+			if (_key > ts_end) {
+				_key = ts_end;
+			}
+			if(typeof _out[_key] != 'undefined'){
+				var new_max = _out[_key].max;
+				if (_quotes[i].max > new_max){
+					new_max = _quotes[i].max;
+				}
+				var new_min = _out[_key].min;
+				if (_quotes[i].min < new_min){
+					new_min = _quotes[i].min;
+				}
+				_out[_key].c = _quotes[i].c;
+				_out[_key].min = new_min;
+				_out[_key].max = new_max;
+				_out[_key].v = _out[_key].v + _quotes[i].v;
+				_out[_key].mc = _out[_key].mc + _quotes[i].mc;
+				_out[_key].ts =	_key;
+			} else {
+				_out[_key] = jQuery.extend({}, _quotes[i]);
+				_out[_key].ts = _key;
+			}
+		}
+		
+		for (var key in _out){
+			quotes.push(_out[key]);
+		}
+
+		if (fill_spaces){
+			var new_quotes = [];
+			for(var i = 0; i < quotes.length; i++){
+				new_quotes.push(quotes[i]);
+				if (typeof quotes[i+1] != 'undefined' && new Date(quotes[i+1].ts*1000).format('d/mm') == new Date(quotes[i].ts*1000).format('d/mm')){
+					for (var nt = quotes[i].ts + interval; nt < quotes[i+1].ts; nt = nt + interval){
+						var _tmp = jQuery.extend({}, quotes[i]);
+						_tmp.v = 0;
+						_tmp.mc = 0;
+						_tmp.ts = nt
+						new_quotes.push(_tmp);
+						delete _tmp;
+					}
+				}
+			}
+			var quotes = new_quotes;
+			delete new_quotes;
+		}
+		
+		if (quotes.length > limit){
+			Helper.quotesAggregateLoop++;
+			var quotes = Helper.aggregateQuotes(quotes, limit, interval * 2, false);
+		}
+		
+		return quotes;
+	},
+	
+	
+	tsToClosestDate: function(ts, isMicrotime, addTimeZone) {
+		if (isMicrotime) {
+			var _mt = 1;
+		}
+		else {
+			var _mt = 1000;
+		}
+
+		var _tsDate = new Date((ts*_mt));
+		
+		if (_tsDate.format('yyyy') != (new Date()).format('yyyy')) {
+			return _tsDate.format('dd/mm/yyyy');
+		}
+		else if (_tsDate.format('dd mmm') != (new Date()).format('dd mmm')) {
+			return _tsDate.format('dd mmm HH:MM');
+		}
+		else {
+			return _tsDate.format('HH:MM');
+		}
+		
+	},
+	
+	parseIntArray: function(_array){
+		
+		var new_array = new Array;
+		for(var i = 0; i < _array.length; i++){
+			if(!isNaN(parseInt(_array[i], 10))){
+				new_array.push(parseInt(_array[i], 10));
+			}
+		}
+		return new_array;
+		
+	},
+	
+
+	intervalCalc: function(_interval, _aggregateLoops){
+		var v = _interval * _aggregateLoops;
+		
+		var is = '';
+		if(v < 3600){
+			is = Math.floor(v/60) + ' min.';
+		} else if(v < 3600 * 24){
+			is = Math.floor(v/3600) + ' godz.';
+		} else if(v < 3600 * 24 * 7){
+			var a = Math.floor(v/(3600*24));
+			if(a == 1){
+				is = 'dzienny';
+			} else {
+				is = a + ' dni';
+			}
+		} else if(v < 3600 * 24 * 28){
+			var a = Math.floor(v/(3600*24*7));
+			if(a == 1){
+				is = 'tygodniowy';
+			} else {
+				is = a + ' tygodniowy';
+			}
+		} else {
+			var a = Math.floor(v/(3600*24*28));
+			if(a == 1){
+				is = 'miesięczny';
+			} else {
+				is = a + ' miesięczny';
+			}
+		}
+		
+		if(is){
+			return 'interwał: <strong>' + is + '</strong>';
+		}
+		return '';
+	}
+	
+	
+}
+
+
+
+
+
+/* ################################################# */
+
+/*
+ * Date Format 1.2.3
+ * (c) 2007-2009 Steven Levithan <stevenlevithan.com>
+ * MIT license
+ *
+ * Includes enhancements by Scott Trenda <scott.trenda.net>
+ * and Kris Kowal <cixar.com/~kris.kowal/>
+ *
+ * Accepts a date, a mask, or a date and a mask.
+ * Returns a formatted version of the given date.
+ * The date defaults to the current date/time.
+ * The mask defaults to dateFormat.masks.default.
+ */
+
+var dateFormat = function () {
+	var	token = /d{1,4}|m{1,4}|yy(?:yy)?|([HhMsTt])\1?|[LloSZ]|"[^"]*"|'[^']*'/g,
+		timezone = /\b(?:[PMCEA][SDP]T|(?:Pacific|Mountain|Central|Eastern|Atlantic) (?:Standard|Daylight|Prevailing) Time|(?:GMT|UTC)(?:[-+]\d{4})?)\b/g,
+		timezoneClip = /[^-+\dA-Z]/g,
+		pad = function (val, len) {
+			val = String(val);
+			len = len || 2;
+			while (val.length < len) val = "0" + val;
+			return val;
+		};
+
+	// Regexes and supporting functions are cached through closure
+	return function (date, mask, utc) {
+		var dF = dateFormat;
+
+		// You can't provide utc if you skip other args (use the "UTC:" mask prefix)
+		if (arguments.length == 1 && Object.prototype.toString.call(date) == "[object String]" && !/\d/.test(date)) {
+			mask = date;
+			date = undefined;
+		}
+
+		// Passing date through Date applies Date.parse, if necessary
+		date = date ? new Date(date) : new Date;
+		if (isNaN(date)) throw SyntaxError("invalid date");
+
+		mask = String(dF.masks[mask] || mask || dF.masks["default"]);
+
+		// Allow setting the utc argument via the mask
+		if (mask.slice(0, 4) == "UTC:") {
+			mask = mask.slice(4);
+			utc = true;
+		}
+
+		var	_ = utc ? "getUTC" : "get",
+			d = date[_ + "Date"](),
+			D = date[_ + "Day"](),
+			m = date[_ + "Month"](),
+			y = date[_ + "FullYear"](),
+			H = date[_ + "Hours"](),
+			M = date[_ + "Minutes"](),
+			s = date[_ + "Seconds"](),
+			L = date[_ + "Milliseconds"](),
+			o = utc ? 0 : date.getTimezoneOffset(),
+			flags = {
+				d:    d,
+				dd:   pad(d),
+				ddd:  dF.i18n.dayNames[D],
+				dddd: dF.i18n.dayNames[D + 7],
+				m:    m + 1,
+				mm:   pad(m + 1),
+				mmm:  dF.i18n.monthNames[m],
+				mmmm: dF.i18n.monthNames[m + 12],
+				yy:   String(y).slice(2),
+				yyyy: y,
+				h:    H % 12 || 12,
+				hh:   pad(H % 12 || 12),
+				H:    H,
+				HH:   pad(H),
+				M:    M,
+				MM:   pad(M),
+				s:    s,
+				ss:   pad(s),
+				l:    pad(L, 3),
+				L:    pad(L > 99 ? Math.round(L / 10) : L),
+				t:    H < 12 ? "a"  : "p",
+				tt:   H < 12 ? "am" : "pm",
+				T:    H < 12 ? "A"  : "P",
+				TT:   H < 12 ? "AM" : "PM",
+				Z:    utc ? "UTC" : (String(date).match(timezone) || [""]).pop().replace(timezoneClip, ""),
+				o:    (o > 0 ? "-" : "+") + pad(Math.floor(Math.abs(o) / 60) * 100 + Math.abs(o) % 60, 4),
+				S:    ["th", "st", "nd", "rd"][d % 10 > 3 ? 0 : (d % 100 - d % 10 != 10) * d % 10]
+			};
+
+		return mask.replace(token, function ($0) {
+			return $0 in flags ? flags[$0] : $0.slice(1, $0.length - 1);
+		});
+	};
+}();
+
+// Some common format strings
+dateFormat.masks = {
+	"default":      "ddd mmm dd yyyy HH:MM:ss",
+	shortDate:      "m/d/yy",
+	mediumDate:     "mmm d, yyyy",
+	longDate:       "mmmm d, yyyy",
+	fullDate:       "dddd, mmmm d, yyyy",
+	shortTime:      "h:MM TT",
+	mediumTime:     "h:MM:ss TT",
+	longTime:       "h:MM:ss TT Z",
+	isoDate:        "yyyy-mm-dd",
+	isoTime:        "HH:MM:ss",
+	isoDateTime:    "yyyy-mm-dd'T'HH:MM:ss",
+	isoUtcDateTime: "UTC:yyyy-mm-dd'T'HH:MM:ss'Z'"
+};
+
+// Internationalization strings
+dateFormat.i18n = {
+	dayNames: [
+		"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat",
+		"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"
+	],
+	monthNames: [
+		"sty", "lut", "mar", "kwi", "maj", "cze", "lip", "sie", "wrz", "paź", "lis", "gru",
+		"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"
+	]
+};
+
+// For convenience...
+Date.prototype.format = function (mask, utc) {
+	return dateFormat(this, mask, utc);
+};
+
+
+
+
+
+if(!Array.indexOf){
+    Array.prototype.indexOf = function(obj){
+        for(var i=0; i<this.length; i++){
+            if(this[i]==obj){
+                return i;
+            }
+        }
+        return -1;
+    }
+}
+
+
+
+jQuery.fn.newvalue = function(_type){
+	var class_name = 'newvalue';
+	if(_type == 'up'){
+		class_name += '_up';
+	}
+	if(_type == 'down'){
+		class_name += '_down';
+	}
+	var curr = $(this);
+	curr.addClass(class_name);
+	setTimeout(function(){
+		curr.removeClass(class_name);
+	}, 2500);
+};  
+
+$.fn.getHexColor = function() {
+    var rgb = $(this).css('color');
+    if (!rgb) {
+        return null; //default color
+    }
+    var hex_rgb = rgb.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/); 
+    function hex(x) {return ("0" + parseInt(x).toString(16)).slice(-2);}
+    if (hex_rgb) {
+        return "#" + hex(hex_rgb[1]) + hex(hex_rgb[2]) + hex(hex_rgb[3]);
+    } else {
+        return rgb; //ie8 returns background-color in hex format then it will make compatible, you can improve it checking if format is in hexadecimal
+    }
+}

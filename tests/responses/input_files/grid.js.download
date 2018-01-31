@@ -1,0 +1,53 @@
+$().ready(function() {
+	Grid.init();
+});
+
+
+Grid = {
+	init: function(){
+		Main.init(this);
+		
+		var graph_height = Math.floor(Main._contentWidth / 2.5);
+		$('.graph-c').css('height', graph_height + 'px')
+	
+		$('.symbol-graph').each(function(){
+			reg = new RegExp(/symbol\-graph\-([0-9]+)/g);
+			reg_dest = reg.exec($(this).attr('id'));
+			if (reg_dest != null){
+				var symbol_oid = parseInt(reg_dest[1], 10);
+				Main.attachGraph(symbol_oid, $(this).attr('range'));
+			}
+		})
+	},
+	
+	APEDataCallBack: function(sdata){
+		
+		if(sdata.symbol){
+			var symbol_container = $('#symbol-' + sdata.symbol.oid);
+			var symbol_graph_container = $('#chartph-' + sdata.symbol.oid);
+			if(symbol_container.length){
+				var current_value = parseFloat($('td.sclose', symbol_container).text());
+				var newvalue_type = '';
+				if(current_value < sdata.symbol.c){
+					newvalue_type = 'up';
+				} 
+				else if(current_value > sdata.symbol.c){
+					newvalue_type = 'down';
+				} 
+				$('td.sclose', symbol_container).text( sdata.symbol.c.toFixed(sdata.symbol.qp) );
+				$('td.schange', symbol_container).html( Helper.mathChangeValueSpan(sdata.symbol.c, sdata.symbol.pc, sdata.symbol.qp) );
+				$('td.schangepr', symbol_container).html( Helper.mathChangeSpan2(sdata.symbol.c, sdata.symbol.pc) );
+				$('td.sdate', symbol_container).text( Helper.tsToClosestDate(sdata.symbol.ts, false, true) );
+				
+				symbol_container.newvalue(newvalue_type);
+				if(symbol_graph_container.length){
+					symbol_graph_container.newvalue(newvalue_type);
+				}
+				
+				if(symbol_container.hasClass('type-graph')){
+					Main.refreshSymbolGraph(sdata.symbol.oid);
+				}
+			}
+		}
+	}
+}
