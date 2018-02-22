@@ -9,9 +9,10 @@ Wymagania funkcjonalne
 
 Wymagania niefunkcjonalne
 ----------
-- Komputer.
+- Komputer
 - Os: Linux lub Windows
-- Połączenie z internetem.
+- Połączenie z internetem
+- Docker
 
 Użycie
 ----------
