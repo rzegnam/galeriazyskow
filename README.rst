@@ -4,14 +4,14 @@ Web scraper
 
 Wymagania funkcjonalne
 ----------
-Pobieranie treści artykułów ze strony galeriazyskow.pl
-Serwis typu REST zwracający zgromadzone posty
+- Pobieranie treści artykułów ze strony galeriazyskow.pl
+- Serwis typu REST zwracający zgromadzone posty
 
 Wymagania niefunkcjonalne
 ----------
-Komputer.
-Os: Linux lub Windows
-Połączenie z internetem.
+- Komputer.
+- Os: Linux lub Windows
+- Połączenie z internetem.
 
 Użycie
 ----------
