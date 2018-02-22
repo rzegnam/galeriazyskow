@@ -15,10 +15,12 @@ Wymagania niefunkcjonalne
 
 Użycie
 ----------
+Po sklonowaniu repozytorium i wywołaniu komendy docker-compose up, aplikacja jest dostępna na porcie 8080
 
 Jeśli nie masz zainstalowanego docker'a, użyj https://labs.play-with-docker.com/
 
 ::
 
+    $ git clone https://github.com/rzegnam/galeriazyskow
     $ docker-compose up -d db
     $ docker-compose up api
