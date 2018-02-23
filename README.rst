@@ -23,5 +23,6 @@ Jeśli nie masz zainstalowanego docker'a, użyj https://labs.play-with-docker.co
 ::
 
     $ git clone https://github.com/rzegnam/galeriazyskow
+    $ cd galeriazyskow
     $ docker-compose up -d db
     $ docker-compose up api
