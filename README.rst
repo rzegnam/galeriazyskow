@@ -1,6 +1,6 @@
-Web scraper
+Skrobak
 ==============
-**Pajączek** - celem aplikacji jest zebranie artykułów z portalu galeriazyskow.pl, przetworzenie i zaprezentowanie ich w formie serwisu typu REST zwracającego zgromadzone posty.
+**Skrobak** - celem aplikacji jest zebranie artykułów z portalu galeriazyskow.pl, przetworzenie i zaprezentowanie ich w formie serwisu typu REST zwracającego zgromadzone posty.
 
 Wymagania funkcjonalne
 ----------
