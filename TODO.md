@@ -2,7 +2,6 @@
 - [ ] dokumentacja
 - [ ] plik konfiguracyjny - login, hasło
 - [ ] testy
-- [ ] na Raspberry
 - [ ] wdrożenie systemu (Scrapy Cloud / Aruba)
 - [ ] kosmetyka
 
