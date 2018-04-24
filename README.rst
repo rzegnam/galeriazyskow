@@ -2,6 +2,10 @@ Skrobak
 ==============
 **Skrobak** - celem aplikacji jest zebranie artykułów z portalu galeriazyskow.pl, przetworzenie i zaprezentowanie ich w formie serwisu typu REST zwracającego zgromadzone posty.
 
+**Prezentacja projektu**
+----------
+http://bit.ly/2HI7k18
+
 Wymagania funkcjonalne
 ----------
 - Pobieranie treści artykułów ze strony galeriazyskow.pl
