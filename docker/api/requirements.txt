@@ -1,5 +1,5 @@
 Scrapy==1.5.0
-SQLAlchemy
+SQLAlchemy==1.2.7
 django
 djangorestframework
 psycopg2
