@@ -4,4 +4,4 @@ django==2.0.5
 djangorestframework==3.8.2
 psycopg2==2.7.4
 scrapy-deltafetch==1.2.1
-requests
+requests==2.18.4
