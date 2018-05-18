@@ -3,5 +3,5 @@ SQLAlchemy==1.2.7
 django==2.0.5
 djangorestframework==3.8.2
 psycopg2==2.7.4
-bsddb3
+bsddb3==6.2.5
 scrapy-deltafetch==1.2.1
