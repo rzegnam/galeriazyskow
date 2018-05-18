@@ -1,7 +1,7 @@
 Scrapy==1.5.0
 SQLAlchemy==1.2.7
 django==2.0.5
-djangorestframework
+djangorestframework==3.8.2
 psycopg2
 scrapy-deltafetch
 requests
